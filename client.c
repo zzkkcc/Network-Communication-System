@@ -119,22 +119,22 @@ void ProceData(void)//use for processing, including ordering received data &
 }
 int main(int argc, char *argv[])
 {
-        int sockfd,lineNum;
-        if(argc <2){// test format of input
-        	perror("invalid input");exit(1);
-        }
-        printf("The client is up an running.\n");
-        if((sockfd=ClienConfig())==-1){//Configure TCP Client & result sockfd #
-		perror("does not receive words");  exit(1);  
-        }
-        bzero(buffer,256);
-        OpenFile(argv[1]);//clear buffer, and then read contents of txt file into buffer.
-        lineNum=CntLine();//Count line numbers
-        SendData(sockfd);//Send data to the edge server
-        printf("The client has successfully finished sending %d lines to the edge server.\n",lineNum);
-        bzero(buffer,MAXBUFLEN);
-        RecvData(sockfd);//waiting to receive data
-	printf("The client has successfully finished receiving all computation results form the edge server.\n");
+    int sockfd,lineNum;
+    if(argc <2){// test format of input
+        perror("invalid input");exit(1);
+    }
+    printf("The client is up an running.\n");
+    if((sockfd=ClienConfig())==-1){//Configure TCP Client & result sockfd #
+        perror("does not receive words");  exit(1);
+    }
+    bzero(buffer,256);
+    OpenFile(argv[1]);//clear buffer, and then read contents of txt file into buffer.
+    lineNum=CntLine();//Count line numbers
+    SendData(sockfd);//Send data to the edge server
+    printf("The client has successfully finished sending %d lines to the edge server.\n",lineNum);
+    bzero(buffer,MAXBUFLEN);
+    RecvData(sockfd);//waiting to receive data
+    printf("The client has successfully finished receiving all computation results form the edge server.\n");
 	printf("The final computation results are:\n");
 	ProceData();//process received data and print them
 	close(sockfd);//close socket
