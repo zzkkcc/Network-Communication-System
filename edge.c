@@ -60,8 +60,8 @@ int serv_config()//Configure as server using TCP
 
 int recv_tcp(int sockfd)//receive data from TCP as a server
 {//Codes in this function comes from Beej's tutorial with modification
-        struct sockaddr_in cli_addr;
-        int clilen,newsockfd,n;
+    struct sockaddr_in cli_addr;
+    int clilen,newsockfd,n;
         
 	listen(sockfd, 10);
 	clilen = sizeof(cli_addr);
@@ -147,40 +147,40 @@ int main(void)
         int linenum,cntOR,cntAND;
         printf("The edge server is up and running.\n");
         
-        sockServ=serv_config();//Configure as TCP Server
-        tcpsockServ=recv_tcp(sockServ);//receive contents from client server
-        linenum=CntLine(tcp_data);
+        sockServ = serv_config();//Configure as TCP Server
+        tcpsockServ = recv_tcp(sockServ);//receive contents from client server
+        linenum = CntLine(tcp_data);
         
-        printf("The edge server has received %d lines from the client using TCP over port %s.\n",linenum, PORT_1);
+        printf("The edge server has received %d lines from the client using TCP over port %s.\n", linenum, PORT_1);
         
-        Descision(servOR,servAND);//make a descision which back-end server is sent
+        Descision(servOR, servAND);//make a descision which back-end server is sent
         cntOR = CntLine(servOR);
         cntAND = CntLine(servAND);//count number of lines for servOR and servAND
         
-        sockCliOr =ClienUdpConfig(PORT_OR,servOR);//Configure as UDP Client,and sent data to servOR
-        printf("The edge server has successfully sent %d lines to the Backend-Server OR.\n",cntOR);
+        sockCliOr = ClienUdpConfig(PORT_OR, servOR);//Configure as UDP Client,and sent data to servOR
+        printf("The edge server has successfully sent %d lines to the Backend-Server OR.\n", cntOR);
         sockCliAnd=ClienUdpConfig(PORT_AND,servAND);//Configure as UDP Client,and sent data to servAnd
-        printf("The edge server has successfully sent %d lines to the Backend-Server AND.\n",cntAND);
+        printf("The edge server has successfully sent %d lines to the Backend-Server AND.\n", cntAND);
         close(sockCliOr);
         close(sockCliAnd);//close udp sending sockets
         
-        bzero(servAND,MAXBUFLEN);
-        bzero(servOR,MAXBUFLEN);//clear content
+        bzero(servAND, MAXBUFLEN);
+        bzero(servOR, MAXBUFLEN);//clear content
         sockServAnd=ServUdpConfig(PORT_EDGE);// Configure as UDP Server with EDGE port number
-        printf("The edge server starts receiving the computation results from Backend-Server OR and Backend-Server And using UDP port %s .\n",PORT_EDGE);
+        printf("The edge server starts receiving the computation results from Backend-Server OR and Backend-Server And using UDP port %s .\n", PORT_EDGE);
         
         RecvUdp(sockServAnd, servAND);
         RecvUdp(sockServAnd, servOR);//receive data from both back-ends
         close(sockServAnd);//close udp receiving socket
         
-        strcat(servOR,"\n");
-        strcat(servOR,servAND);//store received data in servOR
+        strcat(servOR, "\n");
+        strcat(servOR, servAND);//store received data in servOR
         
         printf("The computation results are:\n");
         PrintData(servOR);//print results in correct format
         printf("The edge server has successfully finished receiving all computation results from Backend-Server OR and Backend-Server AND.\n");
         
-        send_tcp(tcpsockServ,servOR);//send TCP data to client
+        send_tcp(tcpsockServ, servOR);//send TCP data to client
         printf("The edge server has successfully finished sending all computation results to the client.\n");
         close(sockServ);
         
