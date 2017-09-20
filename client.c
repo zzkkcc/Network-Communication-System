@@ -12,18 +12,21 @@
 #define PORT "23642"//TCP PORT NUMBER 
 #define MAXBUFLEN 256
 
-char buffer[MAXBUFLEN];//store files from .txt & edge
-char result[MAXBUFLEN][100];//get results
-
-int ClienConfig(void)//the folloing codes in this function comes from Beej's 
-{//tutorial with modifications in order to have tCP Client Configuration
+//buffer variable is used for store files from .txt & edge
+char buffer[MAXBUFLEN];
+//to get results
+char result[MAXBUFLEN][100];
+int ClienConfig(void)
+{
 	int sockfd;
 	struct addrinfo hints, *servinfo;
 	int rv;
 
-	memset(&hints, 0, sizeof hints);//clear hints contents
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;//sent fundamental parameters of TCP Client
+    //clear hints contents
+	memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    //sent fundamental parameters of TCP Client
+	hints.ai_socktype = SOCK_STREAM;
 	
 	if((rv = getaddrinfo("localhost", PORT, &hints, &servinfo))!=0){
 	    fprintf(stderr, "getaddrinfo:%s\n", gai_strerror(rv));
@@ -41,46 +44,57 @@ int ClienConfig(void)//the folloing codes in this function comes from Beej's
 	}
 	return sockfd;
 }
-void OpenFile(char *input)//Open File function, used for Openning "job.txt" and read content
+//used for open "job.txt" and read content in txt
+//assumption: format of "job.txt":
+//AND 10101 10101
+void OpenFile(char *input)
 {
-        FILE *file;
-        size_t size;
-        if((file=fopen(input,"r"))==NULL){//open "job.txt"
-                perror("open file");	exit(1);
-        }
-        if((size=fread((void*)buffer, MAXBUFLEN,1,file))<0){//read file into buffer
-                perror("empty file, nothing to send");	exit(1);
-        }
-        fclose(file);
+    FILE *file;
+    size_t size;
+    //open "job.txt"
+    if((file=fopen(input,"r"))==NULL){
+        perror("open file");
+        exit(1);
+    }
+    if((size=fread((void*)buffer, MAXBUFLEN,1,file))<0){//read file into buffer
+        perror("empty file, nothing to send");
+        exit(1);
+    }
+    fclose(file);
 }
-void SendData(int sockfd)//used for sending data, codes in this function also comes from Beej's
-{//tutorial with modification.
-        int numbytes;
+void SendData(int sockfd)
+{
+    int numbytes;
 	if((numbytes= send(sockfd, buffer, strlen(buffer),0))==-1){
-		perror("talker: sendto");  exit(1);
+		perror("talker: sendto");
+        exit(1);
 	}
 }
-int CntLine()//Count Line Number of content
+//Count Line Number of content
+int CntLine()
 {
-        int i,count;
-        i=count=0;
-        while(buffer[i++]!='\0'){
-		if(buffer[i]=='\n')
-			count++;
-        }
-        return count;
+    int i,count;
+    i=count=0;
+    while(buffer[i++]!='\0'){
+    if(buffer[i]=='\n')
+        count++;
+    }
+    return count;
 }
-void RecvData(int sockfd)//for receive data from edge server
-{// codes in this function comes from Beej's tutorial with modification.	
-        int numbytes;
+void RecvData(int sockfd)
+{
+    int numbytes;
 	numbytes = recv(sockfd, buffer, MAXBUFLEN-1,0);
-        if (numbytes == -1){       
-                perror("Error reading from socket.");    exit(0);
+    if (numbytes == -1){
+        perror("Error reading from socket.");
+        exit(0);
 	}
 	buffer[numbytes]='\0';
 }
-void ProceData(void)//use for processing, including ordering received data & 
-{//print data in correct ways
+//use for processing, including ordering received data &
+//print data in correct ways
+void ProceData(void)
+{
 	int i,j,linenum,order[MAXBUFLEN],t;
 	char temp[100],str[20];
 	linenum=j=i=0;
@@ -88,22 +102,25 @@ void ProceData(void)//use for processing, including ordering received data &
 		if(buffer[i]=='='){
 			j=0;
 			i=i+2;
-			do{//get computation outcomes for result[linenum] 
+            //get computation outcomes for result[linenum]
+			do{
 				result[linenum][j++]=buffer[i++];
 			}while(buffer[i]!='#');
 			result[linenum][j]='\0';
 			j=0;
 			i++;
-			do{//get line number informations for the result
+            //get line number informations for the result
+			do{
 				str[j++]=buffer[i++];
 			}while(buffer[i]!='\n'&&buffer[i]!='\0');
 			str[j]='\0';
 			order[linenum]=atoi(str);
-			linenum++;//change to the next line
+			//move to the next line
+            linenum++;
 		}
 	}while(buffer[i++]!='\0');
-	
-	for(i=0;i<linenum;i++){//the for loop use for order & print received data
+	//the for loop use for order & print received data
+	for(i=0;i<linenum;i++){
 		for(j=0;j<linenum;j++){
 			if(order[j]==i&&(j!=i)){
 				strcpy(temp,result[i]);
@@ -120,23 +137,33 @@ void ProceData(void)//use for processing, including ordering received data &
 int main(int argc, char *argv[])
 {
     int sockfd,lineNum;
-    if(argc <2){// test format of input
-        perror("invalid input");exit(1);
+    //corner case: test format of input is wrong
+    if(argc <2){
+        perror("invalid input");
+        exit(1);
     }
     printf("The client is up an running.\n");
-    if((sockfd=ClienConfig())==-1){//Configure TCP Client & result sockfd #
+    //configure TCP Client & result sockfd number
+    if((sockfd=ClienConfig())==-1){
         perror("does not receive words");  exit(1);
     }
+    //clear buffer, and then read contents of txt file into buffer.
     bzero(buffer,256);
-    OpenFile(argv[1]);//clear buffer, and then read contents of txt file into buffer.
-    lineNum=CntLine();//Count line numbers
-    SendData(sockfd);//Send data to the edge server
+    OpenFile(argv[1]);
+    //Count line numbers
+    lineNum=CntLine();
+    //Send data to the edge server
+    SendData(sockfd);
     printf("The client has successfully finished sending %d lines to the edge server.\n",lineNum);
+    
     bzero(buffer,MAXBUFLEN);
-    RecvData(sockfd);//waiting to receive data
+    //waiting to receive data
+    RecvData(sockfd);
     printf("The client has successfully finished receiving all computation results form the edge server.\n");
 	printf("The final computation results are:\n");
-	ProceData();//process received data and print them
-	close(sockfd);//close socket
+    //process received data and print them
+    ProceData();
+    //close socket
+    close(sockfd);
 	return 0;
 }
