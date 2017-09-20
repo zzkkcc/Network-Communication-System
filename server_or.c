@@ -11,114 +11,146 @@
 
 #include "udpfun.h"
 
-#define PORT_OR "21642"	//server_or udp port number
-#define PORT_EDGE "24642"//udp port number connect to edge
+//server_or udp port number
+#define PORT_OR "21642"
+//udp port number connect to edge
+#define PORT_EDGE "24642"
 
 #define MAXBUFLEN 256
 
-int itob(int num)//convert integer to requried binary number
-{//Eg. 1101 -> 13
-        int i=0,result=0;
-        do{
-            result+=(num%10)<<i++;
-            num=num/10;
-        }while(num);
-        return result;
+//convert integer to requried binary number
+//Eg. 1101 -> 13
+int itob(int num)
+{
+    int i=0,result=0;
+    do{
+        result+=(num%10)<<i++;
+        num=num/10;
+    }while(num);
+    return result;
 }
-void btoa(int num, char result[20])//convert integer to requried string
-{//Eg. 13-> "1101"
-        int count=0,j;
-        char tran[20];
-        
-        while(num)
-        {
-            if(num%2)
-                tran[count++]= 1+'0';
-            else
-                tran[count++]= 0+'0';//get reverse result. Eg. 13-->"1011"
-            num=num>>1;
-        }
+//convert integer to requried string
+//Eg. 13-> "1101"
+void btoa(int num, char result[20])
+{
+    int count=0,j;
+    char tran[20];
+    
+    while(num)
+    {
+        if(num%2)
+            tran[count++]= 1+'0';
+        else
+            //get reverse result. Eg. 13-->"1011"
+            tran[count++]= 0+'0';
+        num=num>>1;
+    }
         tran[count]='\0';
-        for(j=0;j<count;j++){
-            result[j]=tran[count-1-j];
-        }//make reverse result back. Eg. "1011"-->"1101"
-        result[count]='\0';
+    //make reverse result back. Eg. "1011"-->"1101"
+    for(j=0;j<count;j++){
+        result[j]=tran[count-1-j];
+    }
+    result[count]='\0';
 }
 
 int process(char buf[MAXBUFLEN],char buffnew[MAXBUFLEN])//compute received data and print them correctly
 {
-        int i,j,k,totlen,fircom[10],seccom[10],linend[11],linenum,flag;
-        char oper[10][5],fir_str[10][MAXBUFLEN],sec_str[10][20],reschar[10][20],count[10][5];
-        int first[10],second[10],fir_bit[10],sec_bit[10],result[10];
-        totlen=linenum=flag=0;
-        linend[0]=-1;
-        
-        while(buf[totlen]!='\0'){//scan received data and get position & linenumber information
-            if(buf[totlen]==','){//flag=0,first comma detected.    
-                 if(!flag){//flag=0,first comma detected.
-                 fircom[linenum]=totlen;//record position of first comma
-                 flag=1;
-                 }
-                 else if(flag){//flag=1, second comma detected.
-                 seccom[linenum]=totlen;//record position of second comma
-                 }
+    int i,j,k,totlen,fircom[10],seccom[10],linend[11],linenum,flag;
+    char oper[10][5],fir_str[10][MAXBUFLEN],sec_str[10][20],reschar[10][20],count[10][5];
+    int first[10],second[10],fir_bit[10],sec_bit[10],result[10];
+    totlen=linenum=flag=0;
+    linend[0]=-1;
+    
+    //scan received data and get position & linenumber information
+    while(buf[totlen]!='\0'){
+        //flag=0,first comma detected.
+        if(buf[totlen]==','){
+            //flag=0,first comma detected.
+            if(!flag){
+                //record position of first comma
+                fircom[linenum]=totlen;
+                flag=1;
             }
-            else if(buf[totlen]=='\n'){//this line end, ready for next line
-                 flag=0;
-                 linend[linenum+1]=totlen;//record position of len ending
-                 linenum++;
+            //flag=1, second comma detected.
+            else if(flag){
+                //record position of second comma
+                seccom[linenum]=totlen;
             }
-            totlen++;  
         }
-        for(i=0;i<linenum;i++){
-            j=0;
-            for(k=linend[i]+1;k<fircom[i];k++)
-                oper[i][j++]=buf[k];//copy line number information
-            oper[i][j]='\0';
-            j=0;
-            for(k=fircom[i]+1;k<seccom[i];k++)
-                fir_str[i][j++]=buf[k];//copy first string
-            fir_str[i][j]='\0';
-            j=0;
-            for(k=seccom[i]+1;k<linend[i+1];k++)
-                sec_str[i][j++]=buf[k];//copy second string
-            sec_str[i][j]='\0';//complete one line
-            first[i]=atoi(fir_str[i]);
-            second[i]=atoi(sec_str[i]);//convert string to integer number
-            fir_bit[i]=itob(first[i]);
-            sec_bit[i]=itob(second[i]);//conver interger number to requried one, Eg. 1101 -> 13
-            result[i] = fir_bit[i]|sec_bit[i];//computation
-            btoa(result[i],reschar[i]);
-            printf("%s	or	%s	=	%s\n",fir_str[i],sec_str[i],reschar[i]);
-            strcat(reschar[i],oper[i]);
-            strcat(fir_str[i],"	or	");
-            strcat(fir_str[i],sec_str[i]);
-            strcat(fir_str[i],"	=	");
-            strcat(fir_str[i],reschar[i]);//generate sending back messages for one line
+        //this line end, ready for next line
+        else if(buf[totlen]=='\n'){
+            flag=0;
+            //record position of len ending
+            linend[linenum+1]=totlen;
+            linenum++;
         }
-        strcpy(buffnew,fir_str[0]);
-        for(i=1;i<linenum;i++){//generage sending back messages for the whole
-            strcat(buffnew,"\n");
-            strcat(buffnew,fir_str[i]);
+        totlen++;
+    }
+    for(i=0;i<linenum;i++){
+        j=0;
+        for(k=linend[i]+1;k<fircom[i];k++){
+            //copy line number information
+            oper[i][j++]=buf[k];
         }
-        return linenum;
+        oper[i][j]='\0';
+        j=0;
+        for(k=fircom[i]+1;k<seccom[i];k++){
+            //copy first string
+            fir_str[i][j++]=buf[k];
+        }
+        fir_str[i][j]='\0';
+        j=0;
+        for(k=seccom[i]+1;k<linend[i+1];k++){
+            //copy second string
+            sec_str[i][j++]=buf[k];
+        }
+        //complete one line
+        sec_str[i][j]='\0';
+        first[i]=atoi(fir_str[i]);
+        //convert string to integer number
+        second[i]=atoi(sec_str[i]);
+        fir_bit[i]=itob(first[i]);
+        //conver interger number to requried one, Eg. 1101 -> 13
+        sec_bit[i]=itob(second[i]);
+        //computation
+        result[i] = fir_bit[i]|sec_bit[i];
+        btoa(result[i],reschar[i]);
+        printf("%s	or	%s	=	%s\n",fir_str[i],sec_str[i],reschar[i]);
+        strcat(reschar[i],oper[i]);
+        strcat(fir_str[i],"	or	");
+        strcat(fir_str[i],sec_str[i]);
+        strcat(fir_str[i],"	=	");
+        //generate sending back messages for one line
+        strcat(fir_str[i],reschar[i]);
+    }
+    strcpy(buffnew,fir_str[0]);
+    //generage sending back messages for the whole
+    for(i=1;i<linenum;i++){
+        strcat(buffnew,"\n");
+        strcat(buffnew,fir_str[i]);
+    }
+    return linenum;
 }
 int main(void)
 {
-        int sockfd,count,sockSend;
-        char data[MAXBUFLEN],buf[MAXBUFLEN];
-        printf("The Server Or is up and running using UDP on port 21642.\n");
+    int sockfd,count,sockSend;
+    char data[MAXBUFLEN],buf[MAXBUFLEN];
+    printf("The Server Or is up and running using UDP on port 21642.\n");
+    
+    //configure as UDP Server with Port number PORT_OR
+    sockfd=ServUdpConfig(PORT_OR);
+    //receive udp data from edge
+    RecvUdp(sockfd,data);
+    printf("The Server Or starts receiving lines from the edge server for OR computation. The computation results are:\n");
+    close(sockfd);
+    
+    //process data, and return line number
+    count=process(data,buf);
+    printf("The Server OR has successfully received %d line from the edge server and finished all OR computations.\n",count);
         
-        sockfd=ServUdpConfig(PORT_OR);//Configure as UDP Server with Port number PORT_OR
-        RecvUdp(sockfd,data);//receive udp data from edge
-        printf("The Server Or starts receiving lines from the edge server for OR computation. The computation results are:\n");
-        close(sockfd);
-        
-        count=process(data,buf);//process data, and return line number
-        printf("The Server OR has successfully received %d line from the edge server and finished all OR computations.\n",count);
-        
-        sockSend=ClienUdpConfig(PORT_EDGE,buf);//Configure as UDP Client,and sent data to edge
-        printf("The Server OR has successfully finished sending all computation results to edge server.\n");
+    //configure as UDP Client,and sent data to edge
+    sockSend=ClienUdpConfig(PORT_EDGE,buf);
+    printf("The Server OR has successfully finished sending all computation results to edge server.\n");
         
 	return 0;
 }

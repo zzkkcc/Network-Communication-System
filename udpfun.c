@@ -17,29 +17,32 @@ This file summerize 3 similar functions used in the two backen-servers
 and edge server, only in the three servers, this function is used
 */
 
-int ClienUdpConfig(char *PORTNUM, char *buff)
-{//Configure as a UDP Client with PORT number parameter, after configuration,
+//configure as a UDP Client with PORT number parameter, after configuration,
 //content in buffer will be sent.
-//Codes in this function comes from Beej's tutorial with modification
+int ClienUdpConfig(char *PORTNUM, char *buff)
+{
 	int sockfd,numbytes;
 	struct addrinfo hints,*servinfo,*p;
 	int rv;
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM;// set fundamental parameters
+    //set fundamental parameters
+	hints.ai_socktype = SOCK_DGRAM;
 
 	if ((rv = getaddrinfo("localhost", PORTNUM, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return -1;
-	}//get local host name
-        for(p=servinfo; p != NULL; p = p->ai_next) 
+	}
+    //get local host name
+    for(p=servinfo; p != NULL; p = p->ai_next)
 	{
+        //get socket Number
 		if ((sockfd = socket(p->ai_family, p->ai_socktype,p->ai_protocol)) == -1)  
 		{
 			perror("talker: socket");
 			continue;
-		}//get socket Number
+		}
 		break;
 	}
 	if(p == NULL) {
@@ -47,17 +50,17 @@ int ClienUdpConfig(char *PORTNUM, char *buff)
 		return -1;
 	}
 	freeaddrinfo(servinfo);
-	
-        if((numbytes= sendto(sockfd, buff, strlen(buff),0,
-	        p->ai_addr, p -> ai_addrlen)) <0)     {
+	//send content
+    if((numbytes= sendto(sockfd, buff, strlen(buff), 0, p->ai_addr, p -> ai_addrlen)) <0){
 		perror("talker: sendto");  exit(1);
-	}//send content
+	}
 	bzero(buff, MAXBUFLEN);
 	return sockfd;
 }
-int ServUdpConfig(char *PORTNUM)//Configure as Udp server with Port number parameter
-{//Codes in this function comes from Beej's tutorial with modification
-	int sockfd;
+//configure as Udp server with Port number parameter
+int ServUdpConfig(char *PORTNUM)
+{
+    int sockfd;
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
 	
@@ -93,14 +96,14 @@ int ServUdpConfig(char *PORTNUM)//Configure as Udp server with Port number param
 	
 	return sockfd;
 }
-void RecvUdp(int sockfd, char* buff)// Receive Udp data
-{//Codes in this function comes from Beej's tutorial with modification	
-        struct sockaddr_storage their_addr;
+//receive Udp data
+void RecvUdp(int sockfd, char* buff)
+{
+    struct sockaddr_storage their_addr;
 	socklen_t addr_len;
 	int numbytes;
-        addr_len = sizeof their_addr;
-	if ((numbytes = recvfrom(sockfd, buff, MAXBUFLEN-1 , 0,
-		(struct sockaddr *)&their_addr, &addr_len)) == -1) {
+    addr_len = sizeof their_addr;
+    if ((numbytes = recvfrom(sockfd, buff, MAXBUFLEN-1 , 0, (struct sockaddr *)&their_addr, &addr_len)) == -1){
 		perror("recvfrom");
 		exit(1);
 	}
